@@ -540,6 +540,44 @@
             display: block;
         }
 
+        /* Mobile Stats Bar */
+        .mobile-stats {
+            display: none;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px;
+        }
+
+        .mobile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .mobile-stat {
+            text-align: center;
+            padding: 8px 4px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+        }
+
+        .mobile-stat-label {
+            font-size: 0.55em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .mobile-stat-value {
+            font-size: 0.9em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         /* Mobile Layout */
         @media (max-width: 899px) {
             body {
@@ -555,6 +593,10 @@
             .sidebar-left,
             .sidebar-right {
                 display: none;
+            }
+
+            .mobile-stats {
+                display: block;
             }
 
             .mobile-tabs {
@@ -583,10 +625,6 @@
 
             .phone-icon {
                 font-size: 3em;
-            }
-
-            .stats-box {
-                margin: 12px;
             }
 
             .tap-hint {
@@ -618,6 +656,28 @@
     <!-- Header -->
     <div class="header">
         <h1>🏭 Phone Factory Clicker</h1>
+    </div>
+
+    <!-- Mobile Stats Bar -->
+    <div class="mobile-stats">
+        <div class="mobile-stats-grid">
+            <div class="mobile-stat">
+                <div class="mobile-stat-label">📱 Phones</div>
+                <div class="mobile-stat-value" id="mobile-phone-count">0</div>
+            </div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-label">💰 Money</div>
+                <div class="mobile-stat-value" id="mobile-money-count">$0</div>
+            </div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-label">👆 Click</div>
+                <div class="mobile-stat-value" id="mobile-click-power">1</div>
+            </div>
+            <div class="mobile-stat">
+                <div class="mobile-stat-label">⚡ /sec</div>
+                <div class="mobile-stat-value" id="mobile-per-second">0</div>
+            </div>
+        </div>
     </div>
 
     <div class="game-layout">
@@ -774,10 +834,20 @@
 
         // Update Stats
         function updateStats() {
-            document.getElementById('phone-count').textContent = formatNum(Math.floor(phones));
-            document.getElementById('money-count').textContent = '$' + formatNum(Math.floor(money));
-            document.getElementById('click-power').textContent = formatNum(clickPower);
-            document.getElementById('per-second').textContent = formatNum(phonesPerSecond.toFixed(1));
+            const phoneVal = formatNum(Math.floor(phones));
+            const moneyVal = '$' + formatNum(Math.floor(money));
+            const clickVal = formatNum(clickPower);
+            const ppsVal = formatNum(phonesPerSecond.toFixed(1));
+
+            document.getElementById('phone-count').textContent = phoneVal;
+            document.getElementById('money-count').textContent = moneyVal;
+            document.getElementById('click-power').textContent = clickVal;
+            document.getElementById('per-second').textContent = ppsVal;
+
+            document.getElementById('mobile-phone-count').textContent = phoneVal;
+            document.getElementById('mobile-money-count').textContent = moneyVal;
+            document.getElementById('mobile-click-power').textContent = clickVal;
+            document.getElementById('mobile-per-second').textContent = ppsVal;
         }
 
         // Format
