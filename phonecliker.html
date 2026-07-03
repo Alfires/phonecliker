@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phone Factory Clicker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #f43f5e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            padding: 12px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            position: relative;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.3em;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===== DESKTOP LAYOUT ===== */
+        .game-layout {
+            display: flex;
+            height: calc(100vh - 48px);
+        }
+
+        /* Left Sidebar */
+        .sidebar-left {
+            width: 300px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 14px 18px;
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8em;
+            color: var(--primary);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        /* Stats Box */
+        .stats-box {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .stats-title {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: 800;
+        }
+
+        /* Center Click Area */
+        .center-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            overflow: hidden;
+        }
+
+        .factory-scene {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .conveyor {
+            position: absolute;
+            bottom: 18%;
+            left: 0;
+            right: 0;
+            height: 18px;
+            background: repeating-linear-gradient(
+                90deg,
+                #475569 0px,
+                #475569 25px,
+                #334155 25px,
+                #334155 50px
+            );
+            border-top: 3px solid #64748b;
+            border-bottom: 3px solid #64748b;
+        }
+
+        .conveyor::before,
+        .conveyor::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: #64748b;
+            border-radius: 50%;
+            top: -3px;
+        }
+
+        .conveyor::before { left: 8%; }
+        .conveyor::after { right: 8%; }
+
+        .floating-phone {
+            position: absolute;
+            font-size: 1.3em;
+            bottom: calc(18% + 12px);
+            animation: floatAcross 6s linear infinite;
+        }
+
+        @keyframes floatAcross {
+            from { transform: translateX(-50px); }
+            to { transform: translateX(calc(100vw + 50px)); }
+        }
+
+        .machine {
+            position: absolute;
+            font-size: 1.6em;
+            bottom: calc(18% + 28px);
+            opacity: 0.35;
+        }
+
+        .machine:nth-child(1) { left: 4%; animation: work 1.5s ease-in-out infinite; }
+        .machine:nth-child(2) { left: 22%; animation: work 1.8s ease-in-out infinite 0.3s; }
+        .machine:nth-child(3) { right: 22%; animation: work 1.6s ease-in-out infinite 0.6s; }
+        .machine:nth-child(4) { right: 4%; animation: work 1.7s ease-in-out infinite 0.9s; }
+
+        @keyframes work {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-6px) scale(1.05); }
+        }
+
+        /* Phone Button */
+        .phone-btn {
+            position: relative;
+            z-index: 10;
+            width: 170px;
+            height: 300px;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 32px;
+            border: 4px solid #475569;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow:
+                0 25px 80px rgba(99, 102, 241, 0.4),
+                0 0 0 2px rgba(99, 102, 241, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .phone-btn:hover {
+            transform: scale(1.03);
+            box-shadow:
+                0 30px 100px rgba(99, 102, 241, 0.5),
+                0 0 0 3px rgba(99, 102, 241, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .phone-btn:active {
+            transform: scale(0.95);
+            box-shadow:
+                0 10px 40px rgba(99, 102, 241, 0.3),
+                0 0 0 2px rgba(99, 102, 241, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 10px;
+            width: 55px;
+            height: 14px;
+            background: #0f172a;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .phone-screen {
+            width: 140px;
+            height: 255px;
+            background: linear-gradient(180deg, #312e81, #1e1b4b);
+            border-radius: 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid #4338ca;
+        }
+
+        .phone-icon {
+            font-size: 3.5em;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+        }
+
+        .phone-text {
+            color: #a5b4fc;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .tap-hint {
+            position: absolute;
+            bottom: 50px;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .click-float {
+            position: fixed;
+            font-size: 1.3em;
+            font-weight: 800;
+            color: var(--success);
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 0 2px 10px rgba(16, 185, 129, 0.5);
+            animation: floatUp 0.8s forwards;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.4); }
+        }
+
+        /* Right Sidebar */
+        .sidebar-right {
+            width: 300px;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Buildings */
+        .building-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .building-card:hover:not(.locked) {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+            transform: translateX(3px);
+        }
+
+        .building-card:active:not(.locked) {
+            transform: scale(0.98);
+        }
+
+        .building-card.locked {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .building-icon {
+            font-size: 1.6em;
+            width: 42px;
+            height: 42px;
+            background: rgba(99, 102, 241, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .building-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .building-name {
+            font-weight: 700;
+            font-size: 0.8em;
+            margin-bottom: 2px;
+        }
+
+        .building-desc {
+            font-size: 0.62em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .building-stats {
+            display: flex;
+            gap: 10px;
+            font-size: 0.65em;
+        }
+
+        .building-cost {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .building-rate {
+            color: var(--warning);
+        }
+
+        .building-count {
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.8em;
+            flex-shrink: 0;
+        }
+
+        /* Upgrades */
+        .upgrade-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .upgrade-card:hover:not(.owned) {
+            background: var(--bg-card-hover);
+            border-color: var(--warning);
+        }
+
+        .upgrade-card.owned {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: var(--success);
+            cursor: default;
+        }
+
+        .upgrade-icon {
+            font-size: 1.4em;
+            width: 40px;
+            height: 40px;
+            background: rgba(245, 158, 11, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .upgrade-card.owned .upgrade-icon {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .upgrade-info {
+            flex: 1;
+        }
+
+        .upgrade-name {
+            font-weight: 700;
+            font-size: 0.8em;
+            margin-bottom: 1px;
+        }
+
+        .upgrade-desc {
+            font-size: 0.62em;
+            color: var(--text-muted);
+        }
+
+        .upgrade-cost {
+            color: var(--success);
+            font-weight: 600;
+            font-size: 0.7em;
+            margin-top: 3px;
+        }
+
+        .owned-badge {
+            color: var(--success);
+            font-size: 1.2em;
+        }
+
+        .no-items {
+            text-align: center;
+            padding: 30px 15px;
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        .no-items-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+            opacity: 0.4;
+        }
+
+        /* Mobile Tabs */
+        .mobile-tabs {
+            display: none;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mobile-tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mobile-tab-btn.active {
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        /* Mobile Panels */
+        .mobile-panels {
+            display: none;
+        }
+
+        .mobile-panel {
+            display: none;
+            padding: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .mobile-panel.active {
+            display: block;
+        }
+
+        /* Mobile Layout */
+        @media (max-width: 899px) {
+            body {
+                overflow: auto;
+            }
+
+            .game-layout {
+                flex-direction: column;
+                height: auto;
+                min-height: calc(100vh - 48px);
+            }
+
+            .sidebar-left,
+            .sidebar-right {
+                display: none;
+            }
+
+            .mobile-tabs {
+                display: flex;
+            }
+
+            .mobile-panels {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+            }
+
+            .center-area {
+                min-height: 45vh;
+            }
+
+            .phone-btn {
+                width: 150px;
+                height: 260px;
+            }
+
+            .phone-screen {
+                width: 125px;
+                height: 220px;
+            }
+
+            .phone-icon {
+                font-size: 3em;
+            }
+
+            .stats-box {
+                margin: 12px;
+            }
+
+            .tap-hint {
+                bottom: 30px;
+                font-size: 0.75em;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🏭 Phone Factory Clicker</h1>
+    </div>
+
+    <div class="game-layout">
+        <!-- Left Sidebar: Stats + Upgrades -->
+        <div class="sidebar-left">
+            <div class="sidebar-header">📊 Statistics</div>
+            <div class="sidebar-content">
+                <div class="stats-box">
+                    <div class="stats-title">Factory Stats</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">📱 Phones</div>
+                            <div class="stat-value" id="phone-count">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">💰 Money</div>
+                            <div class="stat-value" id="money-count">$0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">👆 Per Click</div>
+                            <div class="stat-value" id="click-power">1</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">⚡ Per Second</div>
+                            <div class="stat-value" id="per-second">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">🔧 Upgrades</div>
+                <div id="sidebar-upgrades"></div>
+            </div>
+        </div>
+
+        <!-- Center: Phone Click Area -->
+        <div class="center-area">
+            <div class="factory-scene">
+                <div class="conveyor"></div>
+                <div class="floating-phone" style="animation-delay: 0s;">📱</div>
+                <div class="floating-phone" style="animation-delay: 2s;">📱</div>
+                <div class="floating-phone" style="animation-delay: 4s;">📱</div>
+                <div class="machine">⚙️</div>
+                <div class="machine">🔩</div>
+                <div class="machine">⚙️</div>
+                <div class="machine">🔩</div>
+            </div>
+
+            <div class="phone-btn" id="main-phone">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="phone-icon">📱</div>
+                    <div class="phone-text">Tap to Make</div>
+                </div>
+            </div>
+            <div class="tap-hint">👆 CLICK TO PRODUCE!</div>
+        </div>
+
+        <!-- Right Sidebar: Buildings -->
+        <div class="sidebar-right">
+            <div class="sidebar-header">🏗️ Buildings</div>
+            <div class="sidebar-content">
+                <div id="sidebar-buildings"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Tabs -->
+    <div class="mobile-tabs">
+        <button class="mobile-tab-btn active" onclick="switchTab('buildings')">🏗️ Buildings</button>
+        <button class="mobile-tab-btn" onclick="switchTab('upgrades')">🔧 Upgrades</button>
+    </div>
+
+    <!-- Mobile Panels -->
+    <div class="mobile-panels">
+        <div class="mobile-panel active" id="panel-buildings">
+            <div class="section-title">🏗️ Buildings</div>
+            <div id="mobile-buildings"></div>
+        </div>
+        <div class="mobile-panel" id="panel-upgrades">
+            <div class="section-title">🔧 Upgrades</div>
+            <div id="mobile-upgrades"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let phones = 0;
+        let money = 0;
+        let clickPower = 1;
+        let phonesPerSecond = 0;
+
+        // Buildings
+        const buildings = [
+            { id: 'worker', name: 'Factory Worker', icon: '👷', desc: 'Hand-assembles phones manually', baseCost: 15, costMult: 1.15, prod: 0.1, count: 0 },
+            { id: 'bench', name: 'Assembly Bench', icon: '🪑', desc: 'Ergonomic workspace for assembly', baseCost: 100, costMult: 1.15, prod: 0.5, count: 0 },
+            { id: 'conveyor', name: 'Conveyor Belt', icon: '⚙️', desc: 'Moves phones through assembly', baseCost: 500, costMult: 1.15, prod: 2, count: 0 },
+            { id: 'robot', name: 'Assembly Robot', icon: '🤖', desc: 'High-speed robotic assembly', baseCost: 3000, costMult: 1.15, prod: 10, count: 0 },
+            { id: 'line', name: 'Production Line', icon: '🏭', desc: 'Full automated line, 24/7', baseCost: 15000, costMult: 1.15, prod: 50, count: 0 },
+            { id: 'factory', name: 'Mega Factory', icon: '🏗️', desc: 'Massive scale production center', baseCost: 100000, costMult: 1.15, prod: 250, count: 0 },
+            { id: 'complex', name: 'Phone Complex', icon: '🌆', desc: 'Entire city block dedicated to phones', baseCost: 500000, costMult: 1.15, prod: 1500, count: 0 },
+            { id: 'dyson', name: 'Phone Dyson Sphere', icon: '🪐', desc: 'Harvests energy to make phones', baseCost: 5000000, costMult: 1.15, prod: 10000, count: 0 }
+        ];
+
+        // Upgrades
+        const upgrades = [
+            { id: 'c1', name: 'Better Tools', icon: '🔧', desc: '+1 per click', cost: 50, owned: false, effect: () => clickPower += 1, req: () => phones >= 10 },
+            { id: 'c2', name: 'Power Gloves', icon: '🧤', desc: '+2 per click', cost: 200, owned: false, effect: () => clickPower += 2, req: () => phones >= 50 },
+            { id: 'c3', name: 'Mechanical Arms', icon: '🦾', desc: '+5 per click', cost: 1000, owned: false, effect: () => clickPower += 5, req: () => phones >= 200 },
+            { id: 'c4', name: 'Laser Cutter', icon: '🔪', desc: '+10 per click', cost: 5000, owned: false, effect: () => clickPower += 10, req: () => phones >= 1000 },
+            { id: 'c5', name: 'Nano Assembler', icon: '🔬', desc: '+25 per click', cost: 25000, owned: false, effect: () => clickPower += 25, req: () => phones >= 5000 },
+            { id: 'c6', name: 'Quantum Press', icon: '⚛️', desc: '+100 per click', cost: 100000, owned: false, effect: () => clickPower += 100, req: () => phones >= 25000 },
+            { id: 's1', name: 'Overtime Shift', icon: '⏰', desc: 'Buildings +50% speed', cost: 500, owned: false, effect: () => buildings.forEach(b => b.prod *= 1.5), req: () => buildings.some(b => b.count >= 5) },
+            { id: 's2', name: 'Quality Control', icon: '✅', desc: 'Buildings +100% speed', cost: 5000, owned: false, effect: () => buildings.forEach(b => b.prod *= 2), req: () => buildings.some(b => b.count >= 10) },
+            { id: 's3', name: 'AI Management', icon: '🧠', desc: 'Buildings +200% speed', cost: 50000, owned: false, effect: () => buildings.forEach(b => b.prod *= 3), req: () => buildings.some(b => b.count >= 20) },
+        ];
+
+        // Init
+        function init() {
+            loadGame();
+            renderAll();
+            document.getElementById('main-phone').addEventListener('click', clickPhone);
+            setInterval(gameLoop, 100);
+            setInterval(saveGame, 10000);
+        }
+
+        // Click
+        function clickPhone(e) {
+            phones += clickPower;
+            money += clickPower;
+            const rect = e.target.getBoundingClientRect();
+            createFloat(e.clientX || rect.left + rect.width / 2, e.clientY || rect.top + rect.height / 2, clickPower);
+            renderAll();
+        }
+
+        function createFloat(x, y, amount) {
+            const el = document.createElement('div');
+            el.className = 'click-float';
+            el.textContent = '+' + formatNum(amount);
+            el.style.left = (x - 20) + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        // Game Loop
+        function gameLoop() {
+            let pps = 0;
+            buildings.forEach(b => pps += b.prod * b.count);
+            phonesPerSecond = pps;
+            phones += pps / 10;
+            money += pps / 10;
+            updateStats();
+        }
+
+        // Update Stats
+        function updateStats() {
+            document.getElementById('phone-count').textContent = formatNum(Math.floor(phones));
+            document.getElementById('money-count').textContent = '$' + formatNum(Math.floor(money));
+            document.getElementById('click-power').textContent = formatNum(clickPower);
+            document.getElementById('per-second').textContent = formatNum(phonesPerSecond.toFixed(1));
+        }
+
+        // Format
+        function formatNum(n) {
+            n = Number(n);
+            if (n >= 1e15) return (n / 1e15).toFixed(1) + 'Q';
+            if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+            if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+            if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+            return Math.floor(n).toString();
+        }
+
+        // Cost
+        function getCost(b) { return Math.floor(b.baseCost * Math.pow(b.costMult, b.count)); }
+
+        // Buy
+        function buyBuilding(i) {
+            const b = buildings[i];
+            const cost = getCost(b);
+            if (money >= cost) {
+                money -= cost;
+                b.count++;
+                renderAll();
+            }
+        }
+
+        function buyUpgrade(i) {
+            const u = upgrades[i];
+            if (!u.owned && money >= u.cost) {
+                money -= u.cost;
+                u.owned = true;
+                u.effect();
+                renderAll();
+            }
+        }
+
+        // Render All
+        function renderAll() {
+            renderBuildings('sidebar-buildings');
+            renderBuildings('mobile-buildings');
+            renderUpgrades('sidebar-upgrades');
+            renderUpgrades('mobile-upgrades');
+            updateStats();
+        }
+
+        function renderBuildings(containerId) {
+            const c = document.getElementById(containerId);
+            if (!c) return;
+            c.innerHTML = buildings.map((b, i) => {
+                const cost = getCost(b);
+                const locked = money < cost;
+                return `
+                    <div class="building-card ${locked ? 'locked' : ''}" onclick="buyBuilding(${i})">
+                        <div class="building-icon">${b.icon}</div>
+                        <div class="building-info">
+                            <div class="building-name">${b.name}</div>
+                            <div class="building-desc">${b.desc}</div>
+                            <div class="building-stats">
+                                <span class="building-cost">$${formatNum(cost)}</span>
+                                <span class="building-rate">+${b.prod}/s each</span>
+                            </div>
+                        </div>
+                        <div class="building-count">${b.count}</div>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderUpgrades(containerId) {
+            const c = document.getElementById(containerId);
+            if (!c) return;
+            let html = '';
+            upgrades.forEach((u, i) => {
+                const visible = u.owned || u.req();
+                if (!visible) return;
+                html += `
+                    <div class="upgrade-card ${u.owned ? 'owned' : ''}" onclick="${u.owned ? '' : 'buyUpgrade(' + i + ')'}">
+                        <div class="upgrade-icon">${u.icon}</div>
+                        <div class="upgrade-info">
+                            <div class="upgrade-name">${u.name}</div>
+                            <div class="upgrade-desc">${u.desc}</div>
+                            <div class="upgrade-cost">${u.owned ? '✅ Owned' : '💰 $' + formatNum(u.cost)}</div>
+                        </div>
+                        ${u.owned ? '<span class="owned-badge">✓</span>' : ''}
+                    </div>`;
+            });
+            c.innerHTML = html || '<div class="no-items"><div class="no-items-icon">🔒</div>Keep producing phones to unlock!</div>';
+        }
+
+        // Tabs (mobile)
+        function switchTab(tab) {
+            document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.mobile-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById('panel-' + tab).classList.add('active');
+        }
+
+        // Save/Load
+        function saveGame() {
+            const d = {
+                phones, money, clickPower,
+                buildings: buildings.map(b => b.count),
+                upgrades: upgrades.map(u => u.owned)
+            };
+            localStorage.setItem('phoneFactory', JSON.stringify(d));
+        }
+
+        function loadGame() {
+            try {
+                const s = localStorage.getItem('phoneFactory');
+                if (!s) return;
+                const d = JSON.parse(s);
+                phones = d.phones || 0;
+                money = d.money || 0;
+                clickPower = d.clickPower || 1;
+                d.buildings?.forEach((n, i) => { if (buildings[i]) buildings[i].count = n; });
+                d.upgrades?.forEach((o, i) => {
+                    if (upgrades[i] && o) {
+                        upgrades[i].owned = true;
+                    }
+                });
+            } catch (e) {}
+        }
+
+        init();
+    </script>
+</body>
+</html>
